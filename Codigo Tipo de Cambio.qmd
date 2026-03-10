@@ -1,0 +1,121 @@
+---
+title: "Tipo de cambio DHGF"
+format: html
+editor: visual
+---
+
+# Proyecto Primer Parcial
+
+## Econometría II
+
+### Análisis del Tipo de Cambio Peso - Dólar
+
+#### Cargar librerias
+
+```{r}
+library(readr)
+library(forecast)
+library(tidyverse)
+library(lubridate)
+library(tseries)
+library(astsa)
+library(foreign)
+library(quantmod)
+```
+
+#### Cargar Datos
+
+```{r}
+datos <- read.csv("EXMXUS.csv", sep = ",")
+head(datos)
+summary(datos)
+
+```
+
+#### Generar serie de tiempo
+
+```{r}
+EXMXUS.ts <- ts(datos$EXMXUS, start = c(1993,11), frequency = 12)
+start(EXMXUS.ts); end(EXMXUS.ts)
+EXMXUS.ts
+plot(EXMXUS.ts, main= "Tipo de cambio MXM-USD", ylab="Tipo de cambio", xlab="Tiempo")
+
+```
+
+#### Buscar autocorrelación
+
+```{r}
+acf(EXMXUS.ts, main="Función de autocorrelación", ylab="Autocorrelación", xlab="Rezago")
+```
+
+```{La serie de tiempo no es estacionaria}
+
+```
+
+#### Diferenciación para serie estacionaria
+
+```{r}
+Diferenciación=diff(EXMXUS.ts)
+plot(Diferenciación, main="Serie Estacionaria", xlab="Tiempo", ylab="Media")
+```
+
+#### Prueba de estacionariedad
+
+```{r}
+adf.test(Diferenciación)
+
+```
+
+#### Revisión de autocorrelación y autocorrelación parcial
+
+```{r}
+acf(ts(Diferenciación, frequency = 1),
+    main="Nueva Autocorrelación", xlab="Rezago", ylab="Autocorrelación")
+pacf(ts(Diferenciación, frequency = 1),
+     main="Autocorrelación Parcial", xlab="Rezago", ylab="Autocorrelación Parcial")
+```
+
+#### Modelo ARIMA
+
+```{r}
+modelo1= arima(EXMXUS.ts, order=c(1,2,1))
+modelo1
+tsdiag(modelo1)
+
+```
+
+#### Prueba de Box Ljung
+
+```{r}
+Box.test(residuals(modelo1), type = "Ljung-Box")
+
+```
+
+#### Calculo de Error
+
+```{r}
+error=residuals(modelo1)
+plot(error, main="Calculo del error", ylab="Error", xlab="Tiempo")
+```
+
+#### Prueba de Residuos
+
+```{r}
+checkresiduals(modelo1)                       
+```
+
+#### Pronóstico
+
+```{r}
+pronostico <- forecast::forecast(modelo1, h = 12)
+pronostico
+plot(pronostico, main = "Pronóstico del tipo de cambio MXM-USD", xlab="Tiempo", ylab="Precio")
+```
+
+#### Tablas Finales
+
+```{r}
+autoplot(EXMXUS.ts, main="Serie de Tiempo Original", ylab = "Precio", xlab = "Tiempo")
+autoplot((diff(EXMXUS.ts)), main="Serie Estacionaria", xlab = "Tiempo", ylab = "Media")
+autoplot(pronostico, main="Pronóstico", xlab="Tiempo", ylab="Precio")
+```
